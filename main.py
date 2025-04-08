@@ -1,0 +1,51 @@
+import requests
+import datetime
+import webbrowser
+from colorama import Fore, Style
+
+def track_ip(ip):
+    try:
+        url = f"http://ip-api.com/json/{ip}"
+        res = requests.get(url).json()
+
+        if res['status'] != 'success':
+            print(Fore.RED + "Invalid IP or API Error!" + Style.RESET_ALL)
+            return
+
+        # Extract data
+        country = res['country']
+        city = res['city']
+        isp = res['isp']
+        lat = res['lat']
+        lon = res['lon']
+        timezone = res['timezone']
+        country_code = res['countryCode']
+
+        # Suspicious country check
+        risky = ['RU', 'CN', 'IR', 'KP']
+        risk_flag = "⚠️ HIGH RISK!" if country_code in risky else "✅ Safe"
+
+        # Output
+        print(f"\n🔍 IP: {ip}")
+        print(f"🌐 Country: {country}, City: {city}, ISP: {isp}")
+        print(f"🕒 Timezone: {timezone}")
+        print(f"📍 Location: {lat}, {lon}")
+        print(Fore.RED + risk_flag + Style.RESET_ALL)
+
+        # Log it
+        with open("logs.txt", "a") as f:
+            f.write(f"[{datetime.datetime.now()}] IP: {ip}, Country: {country}, ISP: {isp}, Risk: {risk_flag}\n")
+
+        # Open on map (works locally, not on headless EC2)
+        try:
+            webbrowser.open(f"https://www.google.com/maps?q={lat},{lon}")
+        except:
+            pass
+
+    except Exception as e:
+        print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
+
+
+if __name__ == "__main__":
+    ip_input = input("Enter IP to track: ")
+    track_ip(ip_input)
